@@ -1,0 +1,7 @@
+[influx]
+update = True
+host = localhost
+port = 8086
+user = cryptocoins
+password = mnahmnahnotrealypasswordneenerneener
+db = CryptoCoins
