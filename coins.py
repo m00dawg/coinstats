@@ -81,7 +81,7 @@ def get_coinbase_accounts(coinbase_client):
 values = get_currency_values()
 
 usdt_eth = float(values['USDT_ETH']['last'])
-usdt_btc = float(values['USDT_ETH']['last'])
+usdt_btc = float(values['USDT_BTC']['last'])
 usdt_ltc = float(values['USDT_ETH']['last'])
 usdt_bch = float(values['USDT_BCH']['last'])
 btc_eth = float(values['BTC_LTC']['last'])
