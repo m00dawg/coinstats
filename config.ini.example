@@ -5,3 +5,8 @@ port = 8086
 user = cryptocoins
 password = mnahmnahnotrealypasswordneenerneener
 db = CryptoCoins
+
+[coinbase]
+api_key = 
+api_secret = 
+
