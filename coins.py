@@ -3,6 +3,7 @@ import urllib, json, os, sys
 import ConfigParser
 from influxdb import InfluxDBClient
 from coinbase.wallet.client import Client
+from time import sleep
 
 config = ConfigParser.ConfigParser()
 config.read(os.path.dirname(sys.argv[0]) + '/config.ini')
@@ -18,8 +19,13 @@ influx = InfluxDBClient(config.get('influx', 'host'),
                         config.get('influx', 'db'),
                         )
 
+sleep_time = 10
+
 def weiToEth(wei):
-  return wei / 1000000000000000000;
+  return wei / 1000000000000000000
+
+def photonsToLTC(photons):
+  return photons / 100000000
 
 def get_wallet(currency, address):
     try:
@@ -29,8 +35,8 @@ def get_wallet(currency, address):
         data = json.loads(response.read())
         return float(data['final_balance'])
     except Exception, e:
-        print "Ah oh something shit the bed. Continuing Anyway"
-        print e
+#        print "Ah oh something shit the bed. Continuing Anyway"
+#        print e
         pass
 
 def get_currency_values():
@@ -40,8 +46,8 @@ def get_currency_values():
         data = json.loads(response.read())
         return data
     except Exception, e:
-        print "Ah oh something shit the bed. Continuing Anyway"
-        print e
+#        print "Ah oh something shit the bed. Continuing Anyway"
+#        print e
         pass
 
 def put_wallet_influx(influx, currency, address, value, usd, btc):
@@ -62,9 +68,9 @@ def put_wallet_influx(influx, currency, address, value, usd, btc):
         ]
         influx.write_points(json_body)
     except Exception, e:
-        print "Exception in Influx!"
-        print e
-        print "Continuing Anyway"
+#        print "Exception in Influx!"
+#        print e
+#        print "Continuing Anyway"
         pass
 
 def get_coinbase_accounts(coinbase_client):
@@ -79,14 +85,13 @@ def get_coinbase_accounts(coinbase_client):
     return account_dict
 
 values = get_currency_values()
-
 usdt_eth = float(values['USDT_ETH']['last'])
 usdt_btc = float(values['USDT_BTC']['last'])
-usdt_ltc = float(values['USDT_ETH']['last'])
-usdt_bch = float(values['USDT_BCH']['last'])
+usdt_ltc = float(values['USDT_LTC']['last'])
+usdt_bch = float(values['USDC_BCHABC']['last'])
 btc_eth = float(values['BTC_LTC']['last'])
 btc_ltc = float(values['BTC_LTC']['last'])
-btc_bch = float(values['BTC_BCH']['last'])
+btc_bch = float(values['BTC_BCHABC']['last'])
 
 # Coinbase
 coinbase_accounts = get_coinbase_accounts(coinbase_client)
@@ -99,10 +104,24 @@ put_wallet_influx(influx, 'btc', 'Coinbase', cb_btc, usdt_btc * cb_btc, cb_btc)
 put_wallet_influx(influx, 'bch', 'Coinbase', cb_bch, usdt_bch * cb_bch, btc_bch * cb_bch)
 put_wallet_influx(influx, 'ltc', 'Coinbase', cb_ltc, usdt_ltc * cb_ltc, btc_ltc * cb_ltc)
 
-# Cold Storage Wallets
+### Wallets
+## Ethereum
+# Cold
 eth = weiToEth(get_wallet('eth', '0x44b4E6da63eA1e5C51715a138a17DaB612Cf329E'))
-btc = get_wallet('btc', '1FPtv6RafvzX9yjkqR2hMTSEa1GPz621X5')
-ltc = get_wallet('ltc', 'LMXdLUmr1Dt6hSbLqv1zbcku1BXtUEgifL')
 put_wallet_influx(influx, 'eth', '0x44b4E6da63eA1e5C51715a138a17DaB612Cf329E', eth, usdt_eth * eth, btc_eth * eth)
+sleep(sleep_time)
+
+# Metamask
+eth = weiToEth(get_wallet('eth', '0x09dB256ae921Cfb1307D8341Eb8edFbEB7AD208B'))
+put_wallet_influx(influx, 'eth', '0x09dB256ae921Cfb1307D8341Eb8edFbEB7AD208B', eth, usdt_eth * eth, btc_eth * eth)
+sleep(sleep_time)
+
+## BTC
+btc = get_wallet('btc', '1FPtv6RafvzX9yjkqR2hMTSEa1GPz621X5') / 100000000
 put_wallet_influx(influx, 'btc', '1FPtv6RafvzX9yjkqR2hMTSEa1GPz621X5', btc, usdt_btc * btc, btc)
+sleep(sleep_time)
+
+## LTC
+ltc = photonsToLTC(get_wallet('ltc', 'LMXdLUmr1Dt6hSbLqv1zbcku1BXtUEgifL'))
 put_wallet_influx(influx, 'ltc', 'LMXdLUmr1Dt6hSbLqv1zbcku1BXtUEgifL', ltc, usdt_ltc * ltc, btc_ltc * ltc)
+sleep(sleep_time)
